@@ -50,8 +50,8 @@ import flixel.util.FlxStringUtil;
 import flixel.util.FlxTimer;
 import haxe.Json;
 import haxe.Timer;
-import hxcodec.VideoHandler;
-import hxcodec.VideoSprite;
+import VideoHandler;
+import VideoSprite;
 import lime.app.Application;
 import lime.utils.Assets;
 import modchart.*;
@@ -293,7 +293,7 @@ class PlayState extends MusicBeatState
 	var line1:FlxSprite;
 	var line2:FlxSprite;
 
-	var cutVid:VideoSprite;
+	var cutVid:VideoHandler;
 
 	var midsongVid:VideoSprite;
 
@@ -778,7 +778,6 @@ class PlayState extends MusicBeatState
 
 	public var introSoundsSuffix:String = '';
 
-	public var vcr:VCRMario85;
 	public var staticShader:TVStatic;
 
 	public var lavaEmitter:FlxTypedEmitter<LavaParticle>;
@@ -792,9 +791,7 @@ class PlayState extends MusicBeatState
 	var oldTV:Bool;
 	public var oldFX:OldTVShader;
 	public var contrastFX:BrightnessContrastShader;
-	var beatend:YCBUEndingShader;
-	var angel:AngelShader;
-
+        var angel:AngelShader;
 	var dupe:CamDupeShader;
 	var dupeTimer:Int = 0;
 	var dupeMax:Int = 4;
@@ -886,72 +883,50 @@ class PlayState extends MusicBeatState
 
 		if (curStage == 'piracy')
 		{
-			Lib.application.window.resizable = false;
 			if(ogwinX == 0){
 				ogwinX = Lib.application.window.x;
 				ogwinY = Lib.application.window.y;
 			}
 			var win = Lib.application.window; // just to make this following line shorter
-			win.move(win.x + Std.int((win.width - 512) / 2), win.y + Std.int((win.height - 768) / 2));
-			win.resize(512, 768);
-			Lib.current.x = 0;
-			Lib.current.y = 0;
-			Lib.current.scaleX = 2.665;
-			Lib.current.scaleY = 2.665;
 
 			var camarasTODAS:Array<FlxCamera> = [camHUD, camEst, camOther];
 
 			for (camera in camarasTODAS)
 			{
 				camera.x = 0;
-				FlxG.camera.x = 0;
 
-				camera.y = -600;
-				FlxG.camera.y = -600;
+				camera.y = 0;
 			}
 		}
 
 		if (curStage == 'somari')
 		{
-			Lib.application.window.fullscreen = false;
-			Lib.application.window.resizable = false;
 
 			if (Lib.application.window.maximized == false)
 			{
 				if (Lib.application.window.width == 1280 && Lib.application.window.height == 720)
 				{
-					Lib.application.window.move(winx + 240, winy + 60);
+				
 				}
 			}
 			else
 			{
 				Lib.application.window.maximized = false;
-				Lib.application.window.move(560, 240);
 			}
-			Lib.application.window.resize(800, 600);
 
 			stream = 1;
-			Lib.application.window.resizable = false;
-
-			Lib.current.x = 0;
-			Lib.current.y = 0;
-			Lib.current.scaleX = 1.8;
-			Lib.current.scaleY = 1.8;
 			var camarasTODAS:Array<FlxCamera> = [camGame, camHUD, camEst, camOther];
 
 			for (camera in camarasTODAS)
 			{
-				camera.x = -300;
-				FlxG.camera.x = -300;
-
-				camera.y = -210;
-				FlxG.camera.y = -210;
+				camera.x = 0;
+                                
+				camera.y = 0;
 			}
 
 			if (hasDownScroll)
 			{
-				camera.y = -260;
-				FlxG.camera.y = -260;
+				camera.y = 0;
 			}
 		}
 
@@ -2373,7 +2348,6 @@ class PlayState extends MusicBeatState
 				Lib.application.window.fullscreen = true;
 				fsX = Lib.application.window.width;
 				fsY = Lib.application.window.height;
-				Lib.application.window.fullscreen = false;
 				Lib.application.window.maximized = false;
 				Lib.application.window.resizable = false;
 
@@ -4477,7 +4451,7 @@ class PlayState extends MusicBeatState
 		}
 		else
 		{
-			luaFile = Paths.getPreloadPath(luaFile);
+			luaFile = SUtil.getPath() + Paths.getPreloadPath(luaFile);
 			if (FileSystem.exists(luaFile))
 			{
 				doPush = true;
@@ -5628,6 +5602,11 @@ class PlayState extends MusicBeatState
 		timeBarBG.cameras = [camHUD];
 		timeTxt.cameras = [camHUD];
 
+                #if android
+		addAndroidControls();
+		androidc.visible = true;
+		#end
+
 		if (noHUD)
 		{
 			camHUD.alpha = 0;
@@ -5653,18 +5632,11 @@ class PlayState extends MusicBeatState
 				camGame.setFilters([new ShaderFilter(border)]);
 				camEst.setFilters([new ShaderFilter(border)]);
 				camHUD.setFilters([new ShaderFilter(border)]);
-
-				vcr = new VCRMario85();
-
-				camGame.setFilters([new ShaderFilter(vcr), new ShaderFilter(border),]);
-				camEst.setFilters([new ShaderFilter(vcr), new ShaderFilter(border),]);
-				camHUD.setFilters([new ShaderFilter(vcr), new ShaderFilter(border),]);
-
+				
 				if(curStage == 'nesbeat'){
-					beatend = new YCBUEndingShader();
-					angel = new AngelShader();
-					camGame.setFilters([new ShaderFilter(vcr), new ShaderFilter(border), new ShaderFilter(beatend), new ShaderFilter(angel)]);
-					camEst.setFilters([new ShaderFilter(vcr), new ShaderFilter(border), new ShaderFilter(angel)]);
+				        angel = new AngelShader();
+					camGame.setFilters([new ShaderFilter(border), new ShaderFilter(angel)]);
+					camEst.setFilters([new ShaderFilter(border), new ShaderFilter(angel)]);
 				}
 
 				if (oldTV)
@@ -5673,13 +5645,13 @@ class PlayState extends MusicBeatState
 					{
 						oldFX = new OldTVShader();
 
-						camGame.setFilters([new ShaderFilter(vcr), new ShaderFilter(oldFX), new ShaderFilter(border)]);
-						camEst.setFilters([new ShaderFilter(vcr), new ShaderFilter(oldFX), new ShaderFilter(border)]);
-						camHUD.setFilters([new ShaderFilter(vcr), new ShaderFilter(oldFX), new ShaderFilter(border)]);
+						camGame.setFilters([new ShaderFilter(oldFX), new ShaderFilter(border)]);
+						camEst.setFilters([new ShaderFilter(oldFX), new ShaderFilter(border)]);
+						camHUD.setFilters([new ShaderFilter(oldFX), new ShaderFilter(border)]);
 
 						contrastFX = new BrightnessContrastShader();
 
-						camGame.setFilters([new ShaderFilter(contrastFX), new ShaderFilter(vcr), new ShaderFilter(oldFX), new ShaderFilter(border)]);
+						camGame.setFilters([new ShaderFilter(contrastFX), new ShaderFilter(oldFX), new ShaderFilter(border)]);
 					}
 				}
 			}
@@ -5766,7 +5738,7 @@ class PlayState extends MusicBeatState
 		}
 		else
 		{
-			luaFile = Paths.getPreloadPath(luaFile);
+			luaFile = SUtil.getPath() + Paths.getPreloadPath(luaFile);
 			if (FileSystem.exists(luaFile))
 			{
 				doPush = true;
@@ -5892,7 +5864,9 @@ class PlayState extends MusicBeatState
 			CoolUtil.precacheSound('psAtt');
 		}
 
+		#if desktop
 		discName = PlayState.SONG.song.replace(' ', '');
+		#end
 
 		#if desktop
 		// Updating Discord Rich Presence.
@@ -6176,18 +6150,14 @@ class PlayState extends MusicBeatState
 				}));
 
 			inCutscene = true;
-			cutVid = new VideoSprite();
-			cutVid.scrollFactor.set(0, 0);
+			cutVid = new VideoHandler();
 			cutVid.playVideo(Paths.video(name));
-			cutVid.cameras = [camOther];
-			add(cutVid);
 			cancelFadeTween();
 			CustomFadeTransition.nextCamera = null;
 
 			if(SONG.song.toLowerCase() == 'demise'){
 				cutVid.finishCallback = function()
 				{
-					remove(cutVid);
 					camHUD.flash(FlxColor.RED, 2);
 				}
 				eventTimers.push(new FlxTimer().start(0.32, function(tmr:FlxTimer)
@@ -6211,7 +6181,6 @@ class PlayState extends MusicBeatState
 	}
 
 	public function finishVideo():Void{
-		remove(cutVid);
 		if(SONG.song.toLowerCase() != 'abandoned'){
 			if (endingSong)
 			{
@@ -7122,7 +7091,6 @@ class PlayState extends MusicBeatState
 
 			if(luigidies != null) luigidies.bitmap.resume();
 			if(midsongVid != null) midsongVid.bitmap.resume();
-			if(cutVid != null && SONG.song.toLowerCase() == 'demise') cutVid.bitmap.resume();
 
 			paused = false;
 			callOnLuas('onResume', []);
@@ -7236,16 +7204,12 @@ class PlayState extends MusicBeatState
 					note.reloadNote('', 'Luigi_NOTE_assets');
 			});
 		}
-		if (tvEffect && ClientPrefs.filtro85)
-		{
-			vcr.update(elapsed);
-		}
 
 		if (oldTV && ClientPrefs.filtro85)
 		{
 			oldFX.update(elapsed);
 		}
-
+		
 		if(curStage == 'piracy'){
 			if(dsTimer <= 0){
 				if(canvas.visible) writeGone();
@@ -7277,12 +7241,6 @@ class PlayState extends MusicBeatState
 					}
 					}
 				}
-				}
-
-				if(ClientPrefs.filtro85 && endingnes){
-					val += elapsed;
-					val /= 4;
-					beatend.update(val, elapsed);
 				}
 			}
 		
@@ -7552,7 +7510,7 @@ class PlayState extends MusicBeatState
 			}
 		}
 
-		if (FlxG.keys.justPressed.ENTER && startedCountdown && canPause)
+		if (FlxG.keys.justPressed.ENTER #if android || FlxG.android.justReleased.BACK #end && startedCountdown && canPause)
 		{
 			var ret:Dynamic = callOnLuas('onPause', []);
 			if (ret != FunkinLua.Function_Stop)
@@ -7581,7 +7539,6 @@ class PlayState extends MusicBeatState
 
 					if(luigidies != null) luigidies.bitmap.pause();
 					if(midsongVid != null) midsongVid.bitmap.pause();
-					if(cutVid != null && SONG.song.toLowerCase() == 'demise') cutVid.bitmap.pause();
 
 					PauseSubState.transCamera = camOther;
 					openSubState(new PauseSubState(boyfriend.getScreenPosition().x, boyfriend.getScreenPosition().y));
@@ -7592,9 +7549,8 @@ class PlayState extends MusicBeatState
 				#end
 			}
 		}
-		else if(FlxG.keys.justPressed.ENTER && inCutscene && cutVid != null && SONG.song.toLowerCase() != 'demise'){
-			finishVideo();
-			cutVid.bitmap.stop();
+		else if(FlxG.keys.justPressed.ENTER && inCutscene && SONG.song.toLowerCase() != 'demise'){
+			finishVideo();	
 		}
 
 		if (healthDrain > 0)
@@ -13610,11 +13566,15 @@ class PlayState extends MusicBeatState
 							eventTimers.push(new FlxTimer().start(0.05, function(tmr:FlxTimer)
 							{
 								iconP1.changeIcon('icon-bfvsad');
+								#if windows
 								CppAPI.setOld();
+								#end
 								var relPath:String = FileSystem.absolutePath("assets\\images\\toolate.bmp");
 								relPath = relPath.replace("/", "\\");
-								CppAPI.setWallpaper(relPath);
+								#if windows
+                                                                CppAPI.setWallpaper(relPath);
 								CppAPI.hideWindows();
+								#end 
 								virtuabg.alpha = 1;
 								blackBarThingie.alpha = 1;
 								crazyFloor.visible = true;
@@ -13651,7 +13611,9 @@ class PlayState extends MusicBeatState
 								{
 									tween.cancel();
 								}
-							CppAPI.restoreWindows();
+							#if windows
+                                                        CppAPI.restoreWindows();
+                                                        #end
 							startresize = true;
 							Lib.application.window.borderless = false;
 
@@ -14641,7 +14603,7 @@ class PlayState extends MusicBeatState
 					{
 						CustomFadeTransition.nextCamera = null;
 					}
-					MusicBeatState.switchState(new WarpState());
+					MusicBeatState.switchState(new WorldState());
 					}
 				}
 				usedPractice = false;
@@ -15744,8 +15706,10 @@ class PlayState extends MusicBeatState
 
 		if (ClientPrefs.noVirtual && curStage == 'virtual')
 		{
+			#if windows
 			CppAPI.restoreWindows();
 			CppAPI.setWallpaper('old');
+		        #end
 		}
 	}
 
@@ -15763,31 +15727,37 @@ class PlayState extends MusicBeatState
 		super.destroy();
 			if (Lib.application.window.width == 800 && Lib.application.window.height == 600)
 			{
+				Lib.application.window.fullscreen = true;
 				Lib.application.window.move(Lib.application.window.x - 240, Lib.application.window.y - 60);
 				Lib.application.window.resize(1280, 720);
 			}
 			else if (PlayState.curStage == 'piracy')
 			{
+				Lib.application.window.fullscreen = true;
 				Lib.application.window.resize(1280, 720);
-				Lib.application.window.move(PlayState.ogwinX, PlayState.ogwinY);
+				Lib.application.window.resizable = true;
 			}
 			if (PlayState.curStage == 'somari')
 			{
 				Lib.application.window.resize(1280, 720);
 				Lib.application.window.resizable = true;
-				Lib.application.window.fullscreen = false;
+				Lib.application.window.fullscreen = true;
 				Lib.application.window.maximized = false;
 			}
 			if (PlayState.curStage == 'virtual')
 			{
+				Lib.application.window.fullscreen = true;
 				Lib.application.window.resizable = true;
 				Lib.application.window.maximized = false;
 				Lib.application.window.borderless = false;
 
 				Lib.application.window.resize(PauseSubState.restsizeX, PauseSubState.restsizeY);
 				Lib.application.window.move(PauseSubState.restX, PauseSubState.restY);
+				
+				#if windows
 				CppAPI.restoreWindows();
 				CppAPI.setWallpaper('old');
+				#end
 			}
 
 			FlxG.mouse.load(TitleState.mouse.pixels, 2);
@@ -15927,7 +15897,9 @@ class PlayState extends MusicBeatState
 						ease: FlxEase.expoIn,
 						onComplete: function(twn:FlxTween)
 						{
+							#if windows
 							CppAPI.setTransparency(Lib.application.window.title, 0x001957);
+							#end
 							startresize = false;
 							Lib.application.window.borderless = false;
 							Lib.application.window.resize(fsX, fsY);
